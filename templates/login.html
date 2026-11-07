@@ -1,0 +1,60 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Iniciar sesión | Mi Inventario</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body class="pagina-registro">
+
+    <div class="registro-contenedor">
+
+        <div class="registro-encabezado">
+            <h1>📦 Mi Inventario</h1>
+            <p>Administra tu negocio desde un solo lugar</p>
+        </div>
+
+        {% with mensajes = get_flashed_messages(with_categories=true) %}
+            {% if mensajes %}
+                {% for categoria, mensaje in mensajes %}
+                    <div class="mensaje {{ categoria }}">
+                        {{ mensaje }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form class="formulario-registro"
+              method="POST"
+              action="{{ url_for('login') }}">
+
+            <h2>Iniciar sesión</h2>
+            <p>Ingresa tus datos para continuar</p>
+
+            <label for="correo">Correo electrónico</label>
+            <input type="email" id="correo" name="correo"
+                   placeholder="ejemplo@correo.com"
+                   autocomplete="email" required>
+
+            <label for="password">Contraseña</label>
+            <input type="password" id="password" name="password"
+                   placeholder="Tu contraseña"
+                   autocomplete="current-password" required>
+
+            <button type="submit">Entrar a mi negocio</button>
+
+            <p class="registro-pie">
+                ¿Todavía no tienes una cuenta?
+                <a href="{{ url_for('registro') }}">
+                    Regístrate aquí
+                </a>
+            </p>
+
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedidos | Mi Inventario</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .pedido-ayuda { color:#687387; margin-top:8px; line-height:1.5; }
+        .pedido-form { display:grid; gap:14px; margin-top:20px; }
+        .pedido-form label { font-weight:600; }
+        .pedido-form select,.pedido-form input { width:100%; min-width:0; padding:13px; border:1px solid #d5d9e2; border-radius:9px; font-size:15px; }
+        .pedido-form button { padding:14px; border:0; border-radius:10px; background:#3949ab; color:white; font-weight:bold; cursor:pointer; }
+        .pedido-form button:hover { background:#283593; }
+        .pedido-form button:disabled { opacity:.5; cursor:not-allowed; }
+        .pedido-tabla { overflow-x:auto; margin-top:20px; }
+        .pedido-tabla table { width:100%; min-width:680px; border-collapse:collapse; }
+        .pedido-tabla th,.pedido-tabla td { text-align:left; padding:14px; border-bottom:1px solid #e5e7eb; vertical-align:top; }
+        .pedido-tabla th { background:#f4f6fb; }
+        .pedido-detalle { padding-left:18px; margin-top:7px; color:#556070; }
+        .pedido-estado { display:inline-block; padding:6px 11px; border-radius:20px; font-size:13px; font-weight:bold; }
+        .pedido-estado.Pendiente { background:#fef3c7; color:#92400e; }
+        .pedido-estado.Pagado { background:#d1fae5; color:#065f46; }
+        .pedido-estado.Cancelado { background:#fee2e2; color:#991b1b; }
+        .pedido-acciones { display:flex; flex-wrap:wrap; gap:6px; }
+        .pedido-acciones button { padding:8px 10px; border:0; border-radius:7px; background:#3949ab; color:white; cursor:pointer; }
+        .pedido-acciones button.cancelar { background:#9d3742; }
+        .pedido-acciones form { display:inline-flex; }
+        .pedido-vacio { color:#6b7280; }
+    </style>
+</head>
+<body>
+<aside class="sidebar">
+    <h2>📦 Mi Inventario</h2>
+    <nav>
+        <a href="{{ url_for('inicio') }}">🏠 Inicio</a>
+        <a href="{{ url_for('productos') }}">📦 Productos</a>
+        <a href="{{ url_for('inventario') }}">📋 Inventario</a>
+        <a href="{{ url_for('ventas') }}">🛒 Ventas</a>
+        <a href="{{ url_for('pedidos') }}" class="activo">📑 Pedidos</a>
+        <a href="{{ url_for('clientes') }}">👥 Clientes</a>
+    </nav>
+</aside>
+<main class="contenido">
+    <header>
+        <div>
+            <h1>Pedidos</h1>
+            <p>Registra pedidos y consulta sus importes y estados de pago</p>
+        </div>
+        <span class="usuario">{{ nombre_usuario }}</span>
+    </header>
+
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+        {% for categoria, mensaje in mensajes %}
+            <div class="mensaje {{ categoria }}">{{ mensaje }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    <section class="panel">
+        <h2>1. Crear pedido</h2>
+        <p class="pedido-ayuda">Selecciona un cliente ya registrado. Después podrás agregar productos al pedido.</p>
+        <form class="pedido-form" action="{{ url_for('pedidos') }}" method="POST">
+            <label for="id_cliente">Cliente</label>
+            <select id="id_cliente" name="id_cliente" required>
+                <option value="">Selecciona un cliente</option>
+                {% for cliente in lista_clientes %}
+                    <option value="{{ cliente.id_cliente }}">{{ cliente.nombre }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" {% if not lista_clientes %}disabled{% endif %}>Crear pedido</button>
+        </form>
+        {% if not lista_clientes %}
+            <p class="pedido-ayuda">Primero registra un comprador en <a href="{{ url_for('clientes') }}">Clientes</a>.</p>
+        {% endif %}
+    </section>
+
+    <section class="panel">
+        <h2>2. Agregar productos al pedido</h2>
+        <p class="pedido-ayuda">Puedes agregar varias unidades o distintos productos a un pedido pendiente. Se calculará el total automáticamente al guardar.</p>
+        <form class="pedido-form" action="{{ url_for('agregar_producto_pedido') }}" method="POST">
+            <label for="id_pedido">Pedido pendiente</label>
+            <select id="id_pedido" name="id_pedido" required>
+                <option value="">Selecciona un pedido</option>
+                {% for pedido in lista_pedidos %}
+                    {% if pedido.estado_pago == 'Pendiente' %}
+                        <option value="{{ pedido.id_pedido }}">{{ pedido.numero_pedido }} — {{ pedido.cliente }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+            <label for="id_producto">Producto</label>
+            <select id="id_producto" name="id_producto" required>
+                <option value="">Selecciona un producto</option>
+                {% for producto in lista_productos %}
+                    <option value="{{ producto.id_producto }}">{{ producto.nombre }} — ${{ '%.2f'|format(producto.precio) }} (stock: {{ producto.stock }})</option>
+                {% endfor %}
+            </select>
+            <label for="cantidad">Cantidad</label>
+            <input type="number" id="cantidad" name="cantidad" min="1" step="1" placeholder="Ej. 2" required>
+            <button type="submit" {% if not lista_productos %}disabled{% endif %}>Agregar al pedido</button>
+        </form>
+    </section>
+
+    <section class="panel">
+        <h2>3. Historial de pedidos</h2>
+        <p class="pedido-ayuda">Marcar un pedido como pagado solo cambia su estado. No genera una venta ni descuenta existencias automáticamente.</p>
+        <div class="pedido-tabla">
+            <table>
+                <thead><tr><th>Número</th><th>Cliente y productos</th><th>Total</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead>
+                <tbody>
+                {% for pedido in lista_pedidos %}
+                    <tr>
+                        <td><strong>{{ pedido.numero_pedido }}</strong></td>
+                        <td>
+                            {{ pedido.cliente }}
+                            {% if detalles.get(pedido.id_pedido) %}
+                                <ul class="pedido-detalle">
+                                {% for item in detalles[pedido.id_pedido] %}
+                                    <li>{{ item.nombre }} × {{ item.cantidad }} — ${{ '%.2f'|format(item.subtotal) }}</li>
+                                {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="pedido-vacio">Sin productos todavía</p>
+                            {% endif %}
+                        </td>
+                        <td>${{ '%.2f'|format(pedido.total) }}</td>
+                        <td><span class="pedido-estado {{ pedido.estado_pago }}">{{ pedido.estado_pago }}</span></td>
+                        <td>{{ pedido.fecha_pedido.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            {% if pedido.estado_pago == 'Pendiente' %}
+                            <div class="pedido-acciones">
+                                <form action="{{ url_for('actualizar_estado_pedido') }}" method="POST">
+                                    <input type="hidden" name="id_pedido" value="{{ pedido.id_pedido }}">
+                                    <input type="hidden" name="estado_pago" value="Pagado">
+                                    <button type="submit" onclick="return confirm('¿Marcar este pedido como pagado? Esta acción no registra una venta.')">Marcar pagado</button>
+                                </form>
+                                <form action="{{ url_for('actualizar_estado_pedido') }}" method="POST">
+                                    <input type="hidden" name="id_pedido" value="{{ pedido.id_pedido }}">
+                                    <input type="hidden" name="estado_pago" value="Cancelado">
+                                    <button type="submit" class="cancelar" onclick="return confirm('¿Cancelar este pedido?')">Cancelar</button>
+                                </form>
+                            </div>
+                            {% else %}—{% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="6" class="pedido-vacio">Aún no hay pedidos. Crea uno arriba para comenzar.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,125 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Ventas | Mi Inventario</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<aside class="sidebar">
+    <h2>📦 Mi Inventario</h2>
+    <nav>
+        <a href="{{ url_for('inicio') }}">🏠 Inicio</a>
+        <a href="{{ url_for('productos') }}">📦 Productos</a>
+        <a href="{{ url_for('inventario') }}">📋 Inventario</a>
+        <a href="{{ url_for('ventas') }}" class="activo">
+            🛒 Ventas
+        </a>
+    </nav>
+</aside>
+
+<main class="contenido">
+    <header>
+        <div>
+            <h1>Registro de ventas</h1>
+            <p>Registra las ventas de tu negocio</p>
+        </div>
+        <span class="usuario">{{ nombre_usuario }}</span>
+    </header>
+
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+        {% for categoria, mensaje in mensajes %}
+            <div class="mensaje {{ categoria }}">
+                {{ mensaje }}
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    <section class="panel">
+        <h2>Nueva venta</h2>
+
+        <form method="POST"
+              action="{{ url_for('ventas') }}"
+              class="formulario-producto">
+
+            <label for="producto">Producto</label>
+            <select id="producto" name="producto" required>
+                <option value="">Selecciona un producto</option>
+                {% for producto in productos %}
+                <option value="{{ producto.id_producto }}"
+        data-precio="{{ producto.precio }}">
+                    {{ producto.nombre }} —
+                    ${{ "%.2f"|format(producto.precio) }}
+                    ({{ producto.stock }} disponibles)
+                </option>
+                {% endfor %}
+            </select>
+
+            <label for="cantidad">Cantidad</label>
+            <input id="cantidad" type="number"
+                   name="cantidad" min="1" step="1" required>
+
+            <label for="metodo_pago">Método de pago</label>
+            <select id="metodo_pago" name="metodo_pago" required>
+                <option value="">Selecciona un método</option>
+                {% for metodo in metodos %}
+                <option value="{{ metodo.id_metodo_pago }}">
+                    {{ metodo.nombre }}
+                </option>
+                {% endfor %}
+            </select>
+            
+<div class="total-venta">
+    <span>Total de la venta:</span>
+    <h2 id="totalVenta">$0.00</h2>
+</div>
+
+            <button type="submit" class="btn-guardar">
+                Registrar venta
+            </button>
+        </form>
+    </section>
+
+    <section class="panel">
+        <h2>Historial de ventas</h2>
+
+        <div class="tabla-contenedor">
+            <table class="tabla-productos">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Método de pago</th>
+                        <th>Total</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for venta in historial %}
+                    <tr>
+                        <td>{{ venta.producto }}</td>
+                        <td>{{ venta.cantidad }}</td>
+                        <td>{{ venta.metodo_pago }}</td>
+                        <td>${{ "%.2f"|format(venta.importe_total) }}</td>
+                        <td>{{ venta.fecha_registro }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5">
+                            Todavía no hay ventas registradas.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+<script src="{{ url_for('static', filename='scripts.js') }}"></script>
+</body>
+</html>

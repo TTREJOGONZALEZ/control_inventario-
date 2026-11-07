@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Productos | Mi Inventario</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<aside class="sidebar">
+    <h2>📦 Mi Inventario</h2>
+    
+<nav>
+    <a href="{{ url_for('inicio') }}">🏠 Inicio</a>
+
+    <a href="{{ url_for('productos') }}" class="activo">
+        📦 Productos
+    </a>
+
+    <a href="{{ url_for('inventario') }}">
+        📋 Inventario
+    </a>
+
+    <a href="{{ url_for('ventas') }}">🛒 Ventas</a>
+</nav>
+
+</aside>
+
+<main class="contenido">
+
+    <header>
+        <div>
+            <h1>Productos</h1>
+            <p>Administra los productos de tu negocio</p>
+        </div>
+        <span class="usuario">{{ nombre_usuario }}</span>
+    </header>
+
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+        {% for categoria, mensaje in mensajes %}
+            <div class="mensaje {{ categoria }}">
+                {{ mensaje }}
+            </div>
+        {% endfor %}
+    {% endwith %}
+    
+    
+<section class="panel">
+    <h2>Crear categoría</h2>
+    <p>Organiza los productos de tu negocio.</p>
+
+    <form method="POST"
+          action="{{ url_for('agregar_categoria') }}"
+          class="formulario-categoria">
+
+        <input
+            type="text"
+            name="nombre_categoria"
+            placeholder="Ej. Cuadernos, Bebidas, Ropa..."
+            maxlength="50"
+            required
+        >
+
+        <button type="submit" class="btn-guardar">
+            Agregar categoría
+        </button>
+    </form>
+</section>
+
+    <section class="panel">
+        <h2>Agregar producto</h2>
+
+        <form method="POST"
+              action="{{ url_for('productos') }}"
+              class="formulario-producto">
+
+            <label for="nombre">Nombre del producto</label>
+            <input id="nombre" type="text" name="nombre"
+                   maxlength="100" required>
+
+            <label for="categoria">Categoría</label>
+            <select id="categoria" name="categoria" required>
+                <option value="">Selecciona una categoría</option>
+                {% for categoria in categorias %}
+                    <option value="{{ categoria.id_categoria }}">
+                        {{ categoria.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <label for="precio">Precio de venta</label>
+            <input id="precio" type="number" name="precio"
+                   min="0" step="0.01" required>
+
+            <label for="stock">Cantidad disponible</label>
+            <input id="stock" type="number" name="stock"
+                   min="0" step="1" required>
+
+            <label for="stock_minimo">Stock mínimo</label>
+            <input id="stock_minimo" type="number"
+                   name="stock_minimo" min="0" step="1" required>
+
+            <button type="submit" class="btn-guardar">
+                Guardar producto
+            </button>
+        </form>
+    </section>
+
+    <section class="panel">
+        <h2>Productos registrados</h2>
+
+        <div class="tabla-contenedor">
+            <table class="tabla-productos">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for producto in lista_productos %}
+                    <tr>
+                        <td>{{ producto.nombre }}</td>
+                        <td>{{ producto.categoria }}</td>
+                        <td>${{ "%.2f"|format(producto.precio) }}</td>
+                        <td>{{ producto.stock_disponible }}</td>
+                        <td>{{ producto.estado_inventario }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5">
+                            Todavía no hay productos registrados.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear cuenta | Mi Inventario</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body class="pagina-registro">
+
+    <div class="registro-contenedor">
+
+        <div class="registro-encabezado">
+            <h1>📦 Mi Inventario</h1>
+            <p>Comienza a administrar tu negocio</p>
+        </div>
+        
+{% with mensajes = get_flashed_messages(with_categories=true) %}
+    {% if mensajes %}
+        {% for categoria, mensaje in mensajes %}
+            <div class="mensaje {{ categoria }}">
+                {{ mensaje }}
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+
+        <form class="formulario-registro" method="POST" action="{{ url_for('registro') }}">
+
+            <h2>Crear cuenta</h2>
+            <p>Completa tus datos para registrar tu negocio</p>
+
+            <label for="nombre">Nombre completo</label>
+            <input type="text" id="nombre" name="nombre"
+                   placeholder="Tu nombre completo" required>
+
+            <label for="negocio">Nombre del negocio</label>
+            <input type="text" id="negocio" name="negocio"
+                   placeholder="Ej. Mi Papelería" required>
+
+            <label for="espacio">Nombre de tu espacio de trabajo</label>
+            <input type="text" id="espacio" name="espacio"
+                   placeholder="Ej. mi-papeleria" required>
+
+            <label for="correo">Correo electrónico</label>
+            <input type="email" id="correo" name="correo"
+                   placeholder="ejemplo@correo.com" required>
+
+            <label for="password">Contraseña</label>
+            <input type="password" id="password" name="password"
+                   minlength="8" autocomplete="new-password"
+                   placeholder="Mínimo 8 caracteres" required>
+
+            <button type="submit">Crear mi cuenta</button>
+
+            
+<p class="registro-pie">
+    ¿Ya tienes una cuenta?
+    <a href="{{ url_for('login') }}">Inicia sesión</a>
+</p>
+
+
+        </form>
+
+    </div>
+
+</body>
+</html>

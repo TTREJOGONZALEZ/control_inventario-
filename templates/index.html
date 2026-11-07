@@ -1,0 +1,73 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Inventarios</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+    <aside class="sidebar">
+        <h2>📦 Mi Inventario</h2>
+
+        <nav>
+            <a href="#" class="activo">🏠 Inicio</a>
+            <a href="{{ url_for('productos') }}">📦 Productos</a>
+            <a href="{{ url_for('inventario') }}">📋 Inventario</a>
+            <a href="{{ url_for('ventas') }}">🛒 Ventas</a>
+            <a href="{{ url_for('pedidos') }}">📑 Pedidos</a>
+            <a href="{{ url_for('clientes') }}">👥 Clientes</a>
+            <a href="{{ url_for('estadisticas') }}">📊 Estadísticas</a>
+        </nav>
+    </aside>
+
+    <main class="contenido">
+        <header>
+            <div>
+                <h1>Panel de control</h1>
+                <p>Bienvenido a tu sistema de inventarios</p>
+            </div>
+            <div class="usuario-contenedor">
+    <span class="usuario">{{ nombre_usuario }}</span>
+
+    <form action="{{ url_for('logout') }}" method="POST">
+        <button type="submit" class="btn-salir">
+            Cerrar sesión
+        </button>
+    </form>
+</div>
+        </header>
+
+        <section class="tarjetas">
+            <div class="tarjeta">
+                <p>Ventas totales</p>
+                <h2>${{ "%.2f"|format(ventas_totales) }}</h2>
+            </div>
+
+            <div class="tarjeta">
+                <p>Productos registrados</p>
+                <h2>{{ total_productos }}</h2>
+            </div>
+
+            <div class="tarjeta">
+                <p>Pedidos</p>
+                <h2>{{ total_pedidos }}</h2>
+            </div>
+
+            <div class="tarjeta">
+                <p>Alertas de inventario</p>
+                <h2>{{ total_alertas }}</h2>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Resumen del negocio</h2>
+            <p>Aquí podrás consultar tus ventas, productos y movimientos recientes.</p>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+</body>
+</html>

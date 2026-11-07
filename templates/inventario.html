@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario | Mi Inventario</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <aside class="sidebar">
+        <h2>📦 Mi Inventario</h2>
+        <nav>
+            <a href="{{ url_for('inicio') }}">🏠 Inicio</a>
+            <a href="{{ url_for('productos') }}">📦 Productos</a>
+            <a href="{{ url_for('inventario') }}" class="activo">📋 Inventario</a>
+            <a href="{{ url_for('ventas') }}">🛒 Ventas</a>
+        </nav>
+    </aside>
+
+    <main class="contenido">
+        <header>
+            <div>
+                <h1>Control de inventario</h1>
+                <p>Consulta las existencias de tus productos</p>
+            </div>
+            <span class="usuario">{{ nombre_usuario }}</span>
+        </header>
+
+        {% with mensajes = get_flashed_messages(with_categories=true) %}
+            {% if mensajes %}
+                {% for categoria, mensaje in mensajes %}
+                    <div class="mensaje {{ categoria }}">{{ mensaje }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section class="tarjetas">
+            <div class="tarjeta">
+                <p>Productos activos</p>
+                <h2>{{ total_productos }}</h2>
+            </div>
+            <div class="tarjeta">
+                <p>Unidades disponibles</p>
+                <h2>{{ total_unidades }}</h2>
+            </div>
+            <div class="tarjeta">
+                <p>Stock bajo</p>
+                <h2>{{ stock_bajo }}</h2>
+            </div>
+            <div class="tarjeta">
+                <p>Productos agotados</p>
+                <h2>{{ agotados }}</h2>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Reabastecer inventario</h2>
+            <p>Agrega unidades a los productos existentes.</p>
+
+            <form method="POST" action="{{ url_for('reabastecer') }}" class="formulario-producto">
+                <label for="id_producto">Producto</label>
+                <select id="id_producto" name="id_producto" required>
+                    <option value="" selected disabled>Selecciona un producto</option>
+                    {% for producto in productos %}
+                        <option value="{{ producto.id_producto }}">{{ producto.nombre }} — {{ producto.stock }} disponibles</option>
+                    {% endfor %}
+                </select>
+
+                <label for="cantidad">Unidades que ingresan</label>
+                <input type="number" id="cantidad" name="cantidad" min="1" step="1" required placeholder="Ej. 20">
+
+                <button type="submit" class="btn-guardar" {% if not productos %}disabled{% endif %}>
+                    Actualizar inventario
+                </button>
+            </form>
+        </section>
+
+        <section class="panel">
+            <h2>Existencias de productos</h2>
+            <div class="tabla-contenedor">
+                <table class="tabla-productos">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th>Precio</th>
+                            <th>Existencias</th>
+                            <th>Stock mínimo</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for producto in productos %}
+                            <tr>
+                                <td>{{ producto.nombre }}</td>
+                                <td>{{ producto.categoria }}</td>
+                                <td>${{ "%.2f"|format(producto.precio) }}</td>
+                                <td>{{ producto.stock }}</td>
+                                <td>{{ producto.stock_minimo }}</td>
+                                <td>
+                                    {% if producto.estado_inventario == 'Disponible' %}
+                                        <span class="estado disponible">Disponible</span>
+                                    {% elif producto.estado_inventario == 'Stock bajo' %}
+                                        <span class="estado bajo">Stock bajo</span>
+                                    {% else %}
+                                        <span class="estado agotado">Agotado</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="6">No hay productos registrados.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

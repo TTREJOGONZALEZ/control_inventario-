@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Estadísticas | Mi Inventario</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <style>
+    .stats-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:18px; }
+    .stats-dato { background:#fff; padding:24px; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,.04); }
+    .stats-dato p { color:#64748b; margin-bottom:12px; }
+    .stats-dato strong { font-size:27px; color:#3949ab; }
+    .stats-aviso { background:#eef2ff; padding:14px 18px; border-radius:10px; margin-top:15px; color:#26357a; line-height:1.5; }
+    .stats-grafica { display:flex; align-items:end; gap:12px; min-height:240px; padding:25px 10px 5px; border-bottom:1px solid #cbd5e1; }
+    .stats-barra { flex:1; display:flex; min-width:0; flex-direction:column; align-items:center; justify-content:end; height:210px; gap:5px; }
+    .stats-barra .barra { width:min(80%,75px); min-height:2px; background:#4657b9; border-radius:7px 7px 0 0; }
+    .stats-barra small { color:#64748b; font-size:12px; white-space:nowrap; }
+    .stats-tabla { width:100%; border-collapse:collapse; margin-top:20px; }
+    .stats-tabla th,.stats-tabla td { text-align:left; border-bottom:1px solid #e2e8f0; padding:12px; }
+    .stats-form { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+    .stats-form input { max-width:140px; padding:10px; border:1px solid #cbd5e1; border-radius:8px; }
+    .stats-form button { background:#3949ab; color:white; border:0; border-radius:8px; padding:11px; cursor:pointer; }
+    .stats-sub { margin:20px 0 10px; }
+    @media (max-width:1100px) { .stats-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media (max-width:650px) { .stats-grid { grid-template-columns:1fr; } .stats-tabla { display:block; overflow-x:auto; } .stats-dato strong { font-size:24px; } }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <h2>📦 Mi Inventario</h2>
+    <nav>
+      <a href="{{ url_for('inicio') }}">🏠 Inicio</a>
+      <a href="{{ url_for('productos') }}">📦 Productos</a>
+      <a href="{{ url_for('inventario') }}">📋 Inventario</a>
+      <a href="{{ url_for('ventas') }}">🛒 Ventas</a>
+      <a href="{{ url_for('pedidos') }}">📑 Pedidos</a>
+      <a href="{{ url_for('clientes') }}">👥 Clientes</a>
+      <a href="{{ url_for('estadisticas') }}" class="activo">📊 Estadísticas</a>
+    </nav>
+  </aside>
+  <main class="contenido">
+    <header>
+      <div><h1>Estadísticas y proyecciones</h1><p>Resultados de tu negocio a partir de las ventas registradas</p></div>
+      <span class="usuario">{{ nombre_usuario }}</span>
+    </header>
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+      {% for categoria, mensaje in mensajes %}
+        <div class="mensaje {{ categoria }}">{{ mensaje }}</div>
+      {% endfor %}
+    {% endwith %}
+    <section class="stats-grid">
+      <div class="stats-dato"><p>Ingresos últimos 30 días</p><strong>${{ '%.2f'|format(ingresos) }}</strong></div>
+      <div class="stats-dato"><p>Ventas registradas (30 días)</p><strong>{{ operaciones }}</strong></div>
+      <div class="stats-dato"><p>Unidades vendidas (30 días)</p><strong>{{ unidades }}</strong></div>
+      <div class="stats-dato"><p>Ticket promedio (30 días)</p><strong>${{ '%.2f'|format(ticket_promedio) }}</strong></div>
+    </section>
+    <section class="panel">
+      <h2>Ingresos de los últimos 7 días</h2>
+      <div class="stats-grafica" role="img" aria-label="Gráfica de barras con ingresos diarios de los últimos siete días">
+        {% for d in grafica %}
+        <div class="stats-barra" title="{{ d.fecha }}: ${{ '%.2f'|format(d.ingresos) }}">
+          <small>${{ '%.0f'|format(d.ingresos) }}</small>
+          <div class="barra" style="height:{{ d.altura }}%"></div>
+          <small>{{ d.fecha }}</small>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    <section class="panel">
+      <h2>Proyección de ingresos</h2>
+      <p>Estimación sencilla basada en el promedio diario de ingresos de los últimos 30 días.</p>
+      <div class="stats-grid stats-sub">
+        <div class="stats-dato"><p>Próximos 7 días</p><strong>{% if proyeccion_7 is not none %}${{ '%.2f'|format(proyeccion_7) }}{% else %}Sin datos{% endif %}</strong></div>
+        <div class="stats-dato"><p>Próximos 30 días</p><strong>{% if proyeccion_30 is not none %}${{ '%.2f'|format(proyeccion_30) }}{% else %}Sin datos{% endif %}</strong></div>
+        <div class="stats-dato"><p>Margen bruto estimado (30 días recientes)</p><strong>{% if margen is not none %}${{ '%.2f'|format(margen) }}{% else %}No disponible{% endif %}</strong></div>
+        <div class="stats-dato"><p>Margen bruto proyectado (30 días)</p><strong>{% if margen_proyectado_30 is not none %}${{ '%.2f'|format(margen_proyectado_30) }}{% else %}No disponible{% endif %}</strong></div>
+      </div>
+      <div class="stats-aviso">
+        Las proyecciones son orientativas y pueden variar. El margen bruto se estima restando a las ventas los costos unitarios actuales de los productos; no descuenta renta, sueldos, impuestos ni otros gastos y no representa utilidad neta.
+        {% if sin_costo %} Hay {{ sin_costo }} venta(s) recientes de productos sin costo registrado: completa esos costos para ver el margen estimado.{% endif %}
+      </div>
+    </section>
+    <section class="panel">
+      <h2>Productos más vendidos</h2>
+      <div class="tabla-contenedor">
+      <table class="stats-tabla"><thead><tr><th>Producto</th><th>Unidades vendidas</th><th>Ingresos históricos</th></tr></thead>
+      <tbody>{% for p in mas_vendidos %}<tr><td>{{ p.nombre }}</td><td>{{ p.unidades }}</td><td>${{ '%.2f'|format(p.ingresos) }}</td></tr>
+      {% else %}<tr><td colspan="3">Todavía no hay ventas registradas.</td></tr>{% endfor %}</tbody></table>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>Costos de compra por producto</h2>
+      <p>Registra cuánto pagas por cada unidad para estimar el margen bruto de ventas.</p>
+      <div class="tabla-contenedor">
+      <table class="stats-tabla"><thead><tr><th>Producto</th><th>Precio de venta</th><th>Costo de compra actual</th></tr></thead>
+        <tbody>
+        {% for p in productos_costos %}
+          <tr><td>{{ p.nombre }}</td><td>${{ '%.2f'|format(p.precio) }}</td>
+            <td>{% if rol == 'administrador' %}
+              <form class="stats-form" method="POST" action="{{ url_for('estadisticas') }}">
+                <input type="hidden" name="id_producto" value="{{ p.id_producto }}">
+                <input type="number" name="costo_compra" min="0" max="99999999.99" step="0.01" required aria-label="Costo de compra de {{ p.nombre }}" value="{{ p.costo_compra if p.costo_compra is not none else '' }}" placeholder="Sin costo">
+                <button type="submit">Guardar</button>
+              </form>{% else %}{{ ('$%.2f'|format(p.costo_compra)) if p.costo_compra is not none else 'No registrado' }}{% endif %}
+            </td>
+          </tr>
+        {% else %}<tr><td colspan="3">No hay productos todavía.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes | Mi Inventario</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <aside class="sidebar">
+        <h2>📦 Mi Inventario</h2>
+        <nav>
+            <a href="{{ url_for('inicio') }}">🏠 Inicio</a>
+            <a href="{{ url_for('productos') }}">📦 Productos</a>
+            <a href="{{ url_for('inventario') }}">📋 Inventario</a>
+            <a href="{{ url_for('ventas') }}">🛒 Ventas</a>
+            <a href="{{ url_for('clientes') }}" class="activo">👥 Clientes</a>
+        </nav>
+    </aside>
+
+    <main class="contenido">
+        <header>
+            <div>
+                <h1>Clientes</h1>
+                <p>Registra y consulta los compradores de tu negocio</p>
+            </div>
+            <div class="usuario-contenedor">
+                <span class="usuario">{{ nombre_usuario }}</span>
+                <form action="{{ url_for('logout') }}" method="POST">
+                    <button type="submit" class="btn-salir">Cerrar sesión</button>
+                </form>
+            </div>
+        </header>
+
+        {% with mensajes = get_flashed_messages(with_categories=true) %}
+            {% for categoria, mensaje in mensajes %}
+                <div class="mensaje {{ categoria }}">{{ mensaje }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <section class="panel">
+            <h2>Agregar cliente</h2>
+            <p>Captura el nombre del comprador para asociarlo a futuros pedidos.</p>
+            <form method="POST" action="{{ url_for('clientes') }}" class="formulario-producto">
+                <label for="nombre">Nombre completo</label>
+                <input type="text" name="nombre" id="nombre" maxlength="100"
+                       placeholder="Ej. María González" required>
+                <button class="btn-guardar" type="submit">Guardar cliente</button>
+            </form>
+        </section>
+
+        <section class="panel">
+            <h2>Clientes registrados ({{ lista_clientes|length }})</h2>
+            <div class="tabla-contenedor">
+                <table class="tabla-productos">
+                    <thead>
+                        <tr><th>ID</th><th>Nombre</th><th>Pedidos asociados</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for cliente in lista_clientes %}
+                        <tr>
+                            <td>{{ cliente.id_cliente }}</td>
+                            <td>{{ cliente.nombre }}</td>
+                            <td>{{ cliente.pedidos_asociados }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3">Todavía no hay clientes registrados.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
